@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html style="background:#000000">
+    <head>
+        <meta charset="utf-8" />
+    </head>
+    <body style="background:#00000; margin:0px">
+        <canvas id="myCanvas" width="1" height="1" style="border:0px solid #000000; margin:0px; padding: 0px;"></canvas> 
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="js/visualizer.js"></script>
+        <script type="text/javascript" src="js/beatdetector.js"></script>
+        <script type="text/javascript">
+            if (window.cordova){
+                app.initialize();
+            }else{
+                setSizes();
+                requestPermission();
+            }
+        </script>
+    </body>
+</html>
+
