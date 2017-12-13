@@ -44,8 +44,8 @@ function detectBeat(values){
     if (threshBreaks >= 2 && threshAge >= minimumBeatDistance) {
         detectedSpeed = detectedSpeed * 0.9 + threshAge * 0.1;
         threshAge = 0;
-        console.log(60000/(detectedSpeed*refreshRate));
-        
+        //console.log(60000/(detectedSpeed*refreshRate));
+         
         if(beatAge > detectedSpeed){
             beatAge = 0;
             return true;

@@ -135,13 +135,14 @@ function printBars() {
     ctx.fillRect(0,0,width,height);
     var drawx = 0;
     var sum = 0; 
+    
     try{
         var freqDomain = new Uint8Array(analyser.frequencyBinCount/freqSplit);
         analyser.getByteFrequencyData(freqDomain);
         filterNoise(freqDomain);
         ctx.fillStyle = color;
         var barwidth = width/(analyser.frequencyBinCount/freqSplit)-(barDistance/2);
-
+        barwidth = barwidth < 1 ? 1 : barwidth; 
         updateColorsAndThreshold(freqDomain);
 
         for (var i = 0; i < analyser.frequencyBinCount / freqSplit; i++) {
