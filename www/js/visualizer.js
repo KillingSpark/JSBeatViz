@@ -41,7 +41,7 @@ window.onresize = function(event) {
     setSizes();
 }
 
-var refreshRate = 100;
+var refreshRate = 50;
 //connect analyzer to a given audioStream and audioContext
 function connectAnalyzer(inputStream, audioctx) {
     try {                                                                                                                                                              
@@ -61,14 +61,14 @@ function updateColorsAndThreshold(values){
     if(beat){
         newColors();
     }else{
-        red -= 2;
-        green -= 2;
-        blue -= 2;
+        red -= 0.2;
+        green -= 0.2;
+        blue -= 0.2;
         color = 'rgb('+ Math.floor(red) +',' + Math.floor(green) + ',' + Math.floor(blue) + ')';
     }
 }
 function newColors(){
-    main = Math.floor(Math.random() * 3.9);
+    main = Math.floor(Math.random() * 3);
     secmain = Math.floor(Math.random() * 2);
     mainweight = 255;
     secmainweight = (Math.random() > 0.45) ? (0.95*255 + Math.random()*0.05*255) : (Math.random()*0.25*255);
@@ -145,7 +145,7 @@ function printBars() {
         updateColorsAndThreshold(freqDomain);
 
         for (var i = 0; i < analyser.frequencyBinCount / freqSplit; i++) {
-            var barheight = height * (freqDomain[i]/255)*0.8
+            var barheight = height * (freqDomain[i]/255)*0.96
             ctx.fillRect(drawx, height - barheight, barwidth, height);
 
             drawx += barwidth + barDistance;
