@@ -35,7 +35,9 @@ var app = {
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
         setSizes();
+        //start the plugin that gives audio stream. didnt get webaudio to work with cordova :/
         audioinput.start({streamToWebAudio: true});
+        //start visualizer mainloop
         connectAnalyzer(audioinput, audioinput.getAudioContext());	
     },
     // Update DOM on a Received Event
@@ -56,7 +58,7 @@ function handleError(error) {
     console.log('navigator.getUserMedia error: ', error);
 }
 
-//for debugging, not in prod (very often called)
+//for debugging, not in prod (called very often)
 function onAudioInput( evt ) {
 // 'evt.data' is an integer array containing raw audio data 
 //    
@@ -76,14 +78,17 @@ var onAudioInputError = function( error ) {
 // Listen to audioinputerror events 
 window.addEventListener( "audioinputerror", onAudioInputError, false );
 
-//if permission is granted initialize important stuff
+//if permission is granted initialize webAudio stuff
 function audioPermissionGranted(stream){
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    audioContext = new AudioContext();
+    audioContext = new window.AudioContext();
     mediastream = audioContext.createMediaStreamSource(stream);
+
+    //enters visualizer mainloop
     connectAnalyzer(mediastream, audioContext); 
 }
 
+//only called on normal webbrowser. Cordova-Mobile version calls connectAnalyzer directly!
 function requestPermission(){
     try {
         navigator.mediaDevices.getUserMedia(constraints).then(audioPermissionGranted).catch(handleError);

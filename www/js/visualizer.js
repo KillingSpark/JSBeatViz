@@ -1,6 +1,3 @@
-//drawing context from canvas
-var ctx;
-
 //The stream either from webAudioAPI or from the plugin
 var instream = {}
 //The analyser from webAudioAPI 
@@ -9,72 +6,35 @@ var analyser = {}
 //how much of the spectrum is interesting to us?
 var freqSplit = 3;
 
+//the canvas and 2d context on the page
 var c = document.getElementById("myCanvas");
-ctx = c.getContext("2d"); 
+var ctx = c.getContext("2d"); 
 
-function makeRGB(r,g,b){
-    return 'rgb('+Math.floor(r)+","+Math.floor(g)+","+Math.floor(b)+")";
-}
-
-var blackWhitePalette = [makeRGB(0,0,0),
-    makeRGB(10,10,10),
-    makeRGB(20,20,20),
-    makeRGB(30,30,30),
-    makeRGB(40,40,40),
-    makeRGB(50,50,50),
-    makeRGB(60,60,60),
-    makeRGB(70,70,70),
-    makeRGB(80,80,80),
-    makeRGB(90,90,90),
-    makeRGB(100,100,100),
-    makeRGB(110,110,110),
-    makeRGB(120,120,120),
-    makeRGB(130,130,130),
-    makeRGB(140,140,140),
-    makeRGB(150,150,150),
-    makeRGB(160,160,160),
-    makeRGB(170,170,170),
-    makeRGB(180,180,180),
-    makeRGB(190,190,190),
-    makeRGB(200,200,200),
-    makeRGB(210,210,210),
-    makeRGB(220,220,220),
-    makeRGB(230,230,230),
-    makeRGB(240,240,240),
-    makeRGB(250,250,250)
-]
-
-var redShadePalette = [
-   makeRGB(170, 57, 57),
-   makeRGB(255,170,170),
-   makeRGB(212,106,106),
-   makeRGB(128, 21, 21),
-   makeRGB( 85,  0,  0)
-]
-
-var deepColorPalette = [
-    makeRGB( 70, 10,  3),
-    makeRGB(168, 84,  0),
-    makeRGB(  2, 85,104),
-    makeRGB(115, 57,  0),
-    makeRGB(  0,146, 23),
-    makeRGB(  2, 85,104),
-]
-
-paletteArray = [blackWhitePalette, redShadePalette, deepColorPalette];
+//cycles through the available palettes
 var paletteArrayIdx = 0;
 
-var palette = deepColorPalette; 
+//cycles through the available colors in the palette
+var paletteIdx = 1;
 
+//current palette
+var palette = paletteArray[0]; 
+
+//switch palette on keyUp
 window.onkeyup = function(e) {
     paletteArrayIdx = (paletteArrayIdx + 1) % paletteArray.length;
     palette = paletteArray[paletteArrayIdx];
 }
-var red = 0;
-var green = 0;
-var blue = 0;
-var color = 'rgb(0,0,0)';
 
+//current color for the bars
+var color = palette[paletteIdx];
+
+//refreshRate for the drawing/polling/beatDetection
+var refreshRate = 50;
+
+//how much pixels are between two bars
+var barDistance = 2;
+
+//needed for reduction of arrays
 function add(a, b) {
     return a + b;
 }
@@ -91,14 +51,12 @@ function setSizes(){
     c.width = width;
     c.height = height;
 };
-
 //connect to resize event
 window.onresize = function(event) {
     setSizes();
 }
 
-var refreshRate = 50;
-//connect analyzer to a given audioStream and audioContext
+//connect analyzer to a given audioStream and audioContext and start the "main loop" 
 function connectAnalyzer(inputStream, audioctx) {
     try {                                                                                                                                                              
         // Assume that node A is ordinarily connected to B.                                                                                                               
@@ -110,63 +68,22 @@ function connectAnalyzer(inputStream, audioctx) {
     setInterval(printBars, refreshRate);
 }
 
-//updates colors for the bars and creates a new color if the sum exceeds the threshold
+//asks the beatDetector if a new beat occured and if yes updates the color from the palette
 function updateColorsAndThreshold(values){
    var beat = detectBeat(values); 
 
     if(beat){
-        getNewColorFromPalette();
-        //newColors();
+        color = updateColorFromPalette();
     }
 }
 
-var paletteIdx = 1;
-function getNewColorFromPalette(){
+//cycles through the palette and sets color
+function updateColorFromPalette(){
     paletteIdx = (paletteIdx + 1) % (palette.length-1);
-    color = palette[1 + paletteIdx];
+    return palette[1 + paletteIdx];
 }
 
-function newColors(){
-    main = Math.floor(Math.random() * 3);
-    secmain = Math.floor(Math.random() * 2);
-    mainweight = 255;
-    secmainweight = (Math.random() > 0.45) ? (0.95*255 + Math.random()*0.05*255) : (Math.random()*0.25*255);
-    rest = Math.random()*0.25*255;
-    if (main === 0){
-        red = mainweight;
-        if (secmain === 0){
-            blue = secmainweight;
-            green = rest;
-        }else{
-            green = secmainweight;
-            blue = rest;
-        }
-    }
-
-    if (main === 1){                                                                                                                                              
-        blue = mainweight;                                                                                                                                         
-        if (secmain === 0){                                                                                                                                       
-            red = secmainweight;                                                                                                                                 
-            green = rest;                                                                                                                                         
-        }else{                                                                                                                                                    
-            green = secmainweight;                                                                                                                                
-            red = rest;                                                                                                                                          
-        }                                                                                                                                                         
-    }
-
-    if (main === 3){                                                                                                                                              
-        green = mainweight;                                                                                                                                         
-        if (secmain === 0){                                                                                                                                       
-            blue = secmainweight;                                                                                                                                 
-            red = rest;                                                                                                                                         
-        }else{                                                                                                                                                    
-            green = secmainweight;                                                                                                                                
-            red = rest;                                                                                                                                          
-        }                                                                                                                                                         
-    }
-    color = 'rgb('+ Math.floor(red) +',' + Math.floor(green) + ',' + Math.floor(blue) + ')';
-}
-
+//filters noise from the frequencies by subtracting the average/1.2 and then scales the values back to max=255
 function filterNoise(freqs) {
     var average = 0;
     for (var i = 0; i < freqs.length; i++){
@@ -187,38 +104,34 @@ function filterNoise(freqs) {
     }
 }
 
-var barDistance = 2;
 function printBars() {
+    //clear and fill with first color from palette
     ctx.clearRect(0,0,width,height);
     ctx.fillStyle = palette[0];
     ctx.fillRect(0,0,width,height);
+
+    //x value of the next bar
     var drawx = 0;
-    var sum = 0; 
+
+    //poll the newest frequencyDomain from the analyzer node
+    var freqDomain = new Uint8Array(analyser.frequencyBinCount/freqSplit);
+    analyser.getByteFrequencyData(freqDomain);
+    filterNoise(freqDomain);
+   
+    //set barwidth to minimum 1
+    var barwidth = width/(analyser.frequencyBinCount/freqSplit)-(barDistance/2);
+    barwidth = barwidth < 1 ? 1 : barwidth; 
     
-    var max = 0;
+    //do color and beat stuff
+    updateColorsAndThreshold(freqDomain);
 
-    try{
-        var freqDomain = new Uint8Array(analyser.frequencyBinCount/freqSplit);
-        analyser.getByteFrequencyData(freqDomain);
-        filterNoise(freqDomain);
-        var barwidth = width/(analyser.frequencyBinCount/freqSplit)-(barDistance/2);
-        barwidth = barwidth < 1 ? 1 : barwidth; 
-        updateColorsAndThreshold(freqDomain);
+    //draw the bars
+    ctx.fillStyle = color;
+    for (var i = 0; i < analyser.frequencyBinCount / freqSplit; i++) {
+        var barheight = height * (freqDomain[i]/255)*0.96
+        ctx.fillRect(drawx, height - barheight, barwidth, height);
 
-        
-        ctx.fillStyle = color;
-        for (var i = 0; i < analyser.frequencyBinCount / freqSplit; i++) {
-            var barheight = height * (freqDomain[i]/255)*0.96
-            ctx.fillRect(drawx, height - barheight, barwidth, height);
-
-            drawx += barwidth + barDistance;
-            
-
-        }
-
-        
-    } catch (e) {
-        console.log(e)
+        drawx += barwidth + barDistance;
     }
 }
 
