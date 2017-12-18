@@ -83,9 +83,9 @@ function add(a, b) {
 function setSizes(){
     document.documentElement.style.overflow = 'hidden';
 
-    width = window.screen.width;
+    width = window.innerWidth;
 
-    height = window.screen.height;
+    height = window.innerHeight;
     console.log("Detected new window-dimensions: " + width + "/" + height);
 
     c.width = width;
