@@ -12,12 +12,68 @@ var freqSplit = 3;
 var c = document.getElementById("myCanvas");
 ctx = c.getContext("2d"); 
 
+function makeRGB(r,g,b){
+    return 'rgb('+Math.floor(r)+","+Math.floor(g)+","+Math.floor(b)+")";
+}
+
+var blackWhitePalette = [makeRGB(0,0,0),
+    makeRGB(10,10,10),
+    makeRGB(20,20,20),
+    makeRGB(30,30,30),
+    makeRGB(40,40,40),
+    makeRGB(50,50,50),
+    makeRGB(60,60,60),
+    makeRGB(70,70,70),
+    makeRGB(80,80,80),
+    makeRGB(90,90,90),
+    makeRGB(100,100,100),
+    makeRGB(110,110,110),
+    makeRGB(120,120,120),
+    makeRGB(130,130,130),
+    makeRGB(140,140,140),
+    makeRGB(150,150,150),
+    makeRGB(160,160,160),
+    makeRGB(170,170,170),
+    makeRGB(180,180,180),
+    makeRGB(190,190,190),
+    makeRGB(200,200,200),
+    makeRGB(210,210,210),
+    makeRGB(220,220,220),
+    makeRGB(230,230,230),
+    makeRGB(240,240,240),
+    makeRGB(250,250,250)
+]
+
+var redShadePalette = [
+   makeRGB(170, 57, 57),
+   makeRGB(255,170,170),
+   makeRGB(212,106,106),
+   makeRGB(128, 21, 21),
+   makeRGB( 85,  0,  0)
+]
+
+var deepColorPalette = [
+    makeRGB( 70, 10,  3),
+    makeRGB(168, 84,  0),
+    makeRGB(  2, 85,104),
+    makeRGB(115, 57,  0),
+    makeRGB(  0,146, 23),
+    makeRGB(  2, 85,104),
+]
+
+paletteArray = [blackWhitePalette, redShadePalette, deepColorPalette];
+var paletteArrayIdx = 0;
+
+var palette = deepColorPalette; 
+
+window.onkeyup = function(e) {
+    paletteArrayIdx = (paletteArrayIdx + 1) % paletteArray.length;
+    palette = paletteArray[paletteArrayIdx];
+}
 var red = 0;
 var green = 0;
 var blue = 0;
 var color = 'rgb(0,0,0)';
-
-
 
 function add(a, b) {
     return a + b;
@@ -59,14 +115,17 @@ function updateColorsAndThreshold(values){
    var beat = detectBeat(values); 
 
     if(beat){
-        newColors();
-    }else{
-        red -= 0.2;
-        green -= 0.2;
-        blue -= 0.2;
-        color = 'rgb('+ Math.floor(red) +',' + Math.floor(green) + ',' + Math.floor(blue) + ')';
+        getNewColorFromPalette();
+        //newColors();
     }
 }
+
+var paletteIdx = 1;
+function getNewColorFromPalette(){
+    paletteIdx = (paletteIdx + 1) % (palette.length-1);
+    color = palette[1 + paletteIdx];
+}
+
 function newColors(){
     main = Math.floor(Math.random() * 3);
     secmain = Math.floor(Math.random() * 2);
@@ -131,26 +190,33 @@ function filterNoise(freqs) {
 var barDistance = 2;
 function printBars() {
     ctx.clearRect(0,0,width,height);
-    ctx.fillStyle = 'rgb(0,0,0)';
+    ctx.fillStyle = palette[0];
     ctx.fillRect(0,0,width,height);
     var drawx = 0;
     var sum = 0; 
     
+    var max = 0;
+
     try{
         var freqDomain = new Uint8Array(analyser.frequencyBinCount/freqSplit);
         analyser.getByteFrequencyData(freqDomain);
         filterNoise(freqDomain);
-        ctx.fillStyle = color;
         var barwidth = width/(analyser.frequencyBinCount/freqSplit)-(barDistance/2);
         barwidth = barwidth < 1 ? 1 : barwidth; 
         updateColorsAndThreshold(freqDomain);
 
+        
+        ctx.fillStyle = color;
         for (var i = 0; i < analyser.frequencyBinCount / freqSplit; i++) {
             var barheight = height * (freqDomain[i]/255)*0.96
             ctx.fillRect(drawx, height - barheight, barwidth, height);
 
             drawx += barwidth + barDistance;
+            
+
         }
+
+        
     } catch (e) {
         console.log(e)
     }
