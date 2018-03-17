@@ -43,6 +43,10 @@ beatDetector.numchan = 20;
 //how many thresholds have to be broken to count as a beat
 beatDetector.threshBreakNum = 2;
 
+beatDetector.energyHist = []
+beatDetector.energyHistInd = 0
+beatDetector.energyHistSize = 100
+
 //filters noise from the frequencies by subtracting the average/1.2 and then scales the values back to max=255
 function filterNoise(freqs) {
     freqs = freqs.slice()
@@ -93,6 +97,10 @@ function updateHistory(values){
         beatDetector.lastValues[chanIdx][histIndex] = localAv;
         chanIdx++;    
     }
+    beatDetector.energyHist[beatDetector.energyHistInd] = energy
+    beatDetector.energyHistInd++
+    beatDetector.energyHistInd %= beatDetector.energyHistSize
+
     histIndex ++;
     histIndex %= beatDetector.histLen;
     return [energy,threshBreaks]
@@ -112,7 +120,12 @@ function detectBeat(values){
             beatDetector.detectedSpeed /=2;
         }
          
-        beatProb = energy / 290
+        energyAv = 0
+        for (var i = 0; i < beatDetector.energyHist.length; i++) {
+            energyAv += beatDetector.energyHist[i]
+        } 
+        energyAv /= beatDetector.energyHist.length
+        beatProb = energy / energyAv
         beatProb = Math.pow(beatProb, 3)
 
         curSpeed = (beatDetector.detectedSpeed/beatDetector.detectedSpeedAge)
