@@ -19,8 +19,8 @@ for (var i = 0; i < beatDetector.lastValues.length; i++){
 var histIndex = 0;
 
 //minimum/maximum times for the occurance of a beat.
-beatDetector.minimumBeatDistance = 200/refreshRate; //300 bpm
-beatDetector.maximumBeatDistance = (600)/refreshRate; //100 bpm
+beatDetector.minimumBeatDistance = 400/refreshRate; //150 bpm
+beatDetector.maximumBeatDistance = (1200)/refreshRate; //50 bpm
 
 //how much an value must beat the average to count as a threshold break
 beatDetector.minimumFactorOverAverage = 1.5;
@@ -43,11 +43,33 @@ beatDetector.numchan = 20;
 //how many thresholds have to be broken to count as a beat
 beatDetector.threshBreakNum = 2;
 
-//checks for beats and updates its history etc 
-function detectBeat(values){
-    var channelWidth = Math.floor(values.length / beatDetector.numchan);
-    var threshBreaks = 0;
+//filters noise from the frequencies by subtracting the average/1.2 and then scales the values back to max=255
+function filterNoise(freqs) {
+    freqs = freqs.slice()
+    var average = 0;
+    for (var i = 0; i < freqs.length; i++){
+        average += freqs[i];
+    }
 
+    average /= freqs.length;
+    average *= 1.2;
+    var max = 0;
+    for (var i = 0; i < freqs.length; i++){
+        freqs[i] = freqs[i] - average < 0 ? 0 : freqs[i] - average;
+        if (max < freqs[i]) { max = freqs[i] }
+    }
+
+    var ratio = 255 / max;
+    for (var i = 0; i < freqs.length; i++){
+        freqs[i] *= ratio;
+    }
+    return freqs
+}
+
+function updateHistory(values){
+    var channelWidth = Math.floor(values.length / beatDetector.numchan);
+    var energy = 0;
+    var threshBreaks = 0;
     //count which channel we are looking after
     var chanIdx = 0;
     for (var i = 0; i < values.length; i += channelWidth){
@@ -65,30 +87,45 @@ function detectBeat(values){
         
         //if localAv big enough count the threshBreak 
         if (histAv*beatDetector.minimumFactorOverAverage < localAv) {threshBreaks++;}
+        energy += (x = (localAv - histAv)) < 0 ? -x : x
 
         //store localAv in history
         beatDetector.lastValues[chanIdx][histIndex] = localAv;
         chanIdx++;    
     }
-
     histIndex ++;
     histIndex %= beatDetector.histLen;
+    return [energy,threshBreaks]
+} 
 
-    //if thresholds broken and last beat long anough ago there is a possible beat
-    if (threshBreaks >= beatDetector.threshBreakNum && beatDetector.threshAge >= beatDetector.minimumBeatDistance) {
-        beatDetector.detectedSpeed += beatDetector.threshAge;
-        beatDetector.detectedSpeedAge++;
-        
+//checks for beats and updates its history etc 
+function detectBeat(values){
+    values = filterNoise(values)
+    var histRes = updateHistory(values);
+    var threshBreaks = histRes[1]
+    var energy = histRes[0]
+
+    if (beatDetector.beatAge >= beatDetector.minimumBeatDistance) {
         //prevent overflows
         if (beatDetector.detectedSpeedAge > beatDetector.detectedSpeedAgeMaximium){
             beatDetector.detectedSpeedAge /= 2;
             beatDetector.detectedSpeed /=2;
         }
-
-        beatDetector.threshAge = 0;
          
-        //if beatAge beats the detectedSpeed we detect a beat
-        if(beatDetector.beatAge > beatDetector.detectedSpeed/beatDetector.detectedSpeedAge){
+        beatProb = energy / 290
+        beatProb = Math.pow(beatProb, 3)
+
+        curSpeed = (beatDetector.detectedSpeed/beatDetector.detectedSpeedAge)
+        timingProb =  (beatDetector.beatAge % curSpeed)/curSpeed
+        
+        
+        timingProb = Math.abs(timingProb - 1/2)*2
+        timingProb = Math.pow(timingProb, 2)
+        //console.log(timingProb)
+        if(beatProb + timingProb > 1.3){
+            //console.log(beatProb+"/"+timingProb)
+            beatDetector.detectedSpeed += beatDetector.beatAge;
+            beatDetector.detectedSpeedAge++;
             beatDetector.beatAge = 0;
             return true;
         }            
@@ -98,10 +135,10 @@ function detectBeat(values){
     beatDetector.threshAge += 1;
     
     //force beat after maximumBeatDistance
-    if(beatDetector.beatAge >= beatDetector.maximumBeatDistance){
-        beatDetector.beatAge = 0;
-        return true;
-    }
+    //if(beatDetector.beatAge >= beatDetector.maximumBeatDistance){
+    //    beatDetector.beatAge = 0;
+    //    return true;
+    //}
 
     //default to false
     return false;

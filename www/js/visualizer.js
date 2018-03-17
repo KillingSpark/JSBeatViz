@@ -4,7 +4,7 @@ var instream = {}
 var analyser = {}
 
 //how much of the spectrum is interesting to us?
-var freqSplit = 3;
+var freqSplit = 3.2;
 
 //the canvas and 2d context on the page
 var c = document.getElementById("myCanvas");
@@ -83,15 +83,15 @@ function updateColorFromPalette(){
     return palette[1 + paletteIdx];
 }
 
-//filters noise from the frequencies by subtracting the average/1.2 and then scales the values back to max=255
-function filterNoise(freqs) {
+function sharpenBars(freqs) {
+    freqs = freqs.slice()
     var average = 0;
     for (var i = 0; i < freqs.length; i++){
         average += freqs[i];
     }
 
     average /= freqs.length;
-    average /= 1.2;
+    average /= 1.5;
     var max = 0;
     for (var i = 0; i < freqs.length; i++){
         freqs[i] = freqs[i] - average < 0 ? 0 : freqs[i] - average;
@@ -102,7 +102,8 @@ function filterNoise(freqs) {
     for (var i = 0; i < freqs.length; i++){
         freqs[i] *= ratio;
     }
-}
+    return freqs
+} 
 
 function printBars() {
     //clear and fill with first color from palette
@@ -116,7 +117,6 @@ function printBars() {
     //poll the newest frequencyDomain from the analyzer node
     var freqDomain = new Uint8Array(analyser.frequencyBinCount/freqSplit);
     analyser.getByteFrequencyData(freqDomain);
-    filterNoise(freqDomain);
    
     //set barwidth to minimum 1
     var barwidth = width/(analyser.frequencyBinCount/freqSplit)-(barDistance/2);
@@ -124,6 +124,7 @@ function printBars() {
     
     //do color and beat stuff
     updateColorsAndThreshold(freqDomain);
+    freqDomain = sharpenBars(freqDomain)
 
     //draw the bars
     ctx.fillStyle = color;

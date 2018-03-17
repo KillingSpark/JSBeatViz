@@ -3,7 +3,8 @@ function makeRGB(r,g,b){
     return 'rgb('+Math.floor(r)+","+Math.floor(g)+","+Math.floor(b)+")";
 }
 
-var blackWhitePalette = [makeRGB(0,0,0),
+var blackWhitePalette = [
+    makeRGB(0,0,0),
     makeRGB(10,10,10),
     makeRGB(20,20,20),
     makeRGB(30,30,30),
