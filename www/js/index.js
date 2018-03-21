@@ -38,6 +38,7 @@ var app = {
         //start the plugin that gives audio stream. didnt get webaudio to work with cordova :/
         audioinput.start({streamToWebAudio: true});
         //start visualizer mainloop
+        initBeatDetector(newDataCB, beatCB);
         connectAnalyzer(audioinput, audioinput.getAudioContext());	
     },
     // Update DOM on a Received Event
@@ -85,6 +86,7 @@ function audioPermissionGranted(stream){
     mediastream = audioContext.createMediaStreamSource(stream);
 
     //enters visualizer mainloop
+    initBeatDetector(newDataCB, beatCB);
     connectAnalyzer(mediastream, audioContext); 
 }
 
