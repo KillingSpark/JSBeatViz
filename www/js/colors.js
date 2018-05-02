@@ -49,5 +49,5 @@ var deepColorPalette = [
     makeRGB(  2, 85,104),
 ]
 
-paletteArray = [blackWhitePalette, redShadePalette, deepColorPalette];
+paletteArray = [deepColorPalette, blackWhitePalette, redShadePalette];
 
